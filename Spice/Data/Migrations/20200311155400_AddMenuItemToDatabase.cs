@@ -13,7 +13,7 @@ namespace Spice.Data.Migrations
                     Id = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(nullable: false),
-                    Description = table.Column<int>(nullable: false),
+                    Description = table.Column<string>(nullable: false),
                     Spicyness = table.Column<string>(nullable: true),
                     Image = table.Column<string>(nullable: true),
                     CategoryId = table.Column<int>(nullable: false),

@@ -14,7 +14,7 @@ namespace Spice.Models
 
         [Required]
         public string Name { get; set; }
-        public int Description { get; set; }
+        public string Description { get; set; }
 
         public string Spicyness { get; set; }
         public enum ESpicy { NA = 0, NotSpicy = 1, Spicy = 2, VerySpicy = 3 }
@@ -36,7 +36,5 @@ namespace Spice.Models
 
         [Range(1, int.MaxValue, ErrorMessage = "Price should be greater than ${1}")]
         public double Price { get; set; }
-
-
     }
 }
