@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Spice.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ namespace Spice.Utility
         public const string FrontDeskUser = "FrontDesk";
         public const string CustomerUser = "Customer";
         public const string ssShoppingCartCount = "ssCartCount";
+        public const string ssCouponCode = "ssCouponCode";
 
         public static string ConvertToRawHtml(string source)
         {
@@ -41,6 +43,38 @@ namespace Spice.Utility
                 }
             }
             return new string(array, 0, arrayIndex);
+        }
+
+        public static double DiscountedPrice(Coupon couponFromDb, double OriginalOrderTotal)
+        {
+            if (couponFromDb == null)
+            {
+                return OriginalOrderTotal;
+            }
+            else
+            {
+                if (couponFromDb.MinimumAmount > OriginalOrderTotal)
+                {
+                    return OriginalOrderTotal;
+                }
+                else
+                {
+                    // Coupon valid
+                    if (Convert.ToInt32(couponFromDb.CouponType) == (int)Coupon.ECouponType.Dollar)
+                    {
+                        return Math.Round(OriginalOrderTotal - couponFromDb.Discount, 2);
+                    }
+
+                    if (Convert.ToInt32(couponFromDb.CouponType) == (int)Coupon.ECouponType.Percent)
+                    {
+                        return Math.Round(OriginalOrderTotal - (OriginalOrderTotal * couponFromDb.Discount/100), 2);
+                    }
+                    else
+                    {
+                        return OriginalOrderTotal;
+                    }
+                }
+            }
         }
     }
 }
