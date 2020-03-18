@@ -37,7 +37,7 @@ namespace Spice.Controllers
                 Coupon = await _db.Coupon.Where(c => c.isActive == true).ToListAsync(),
             };
 
-            var claimsIndentity = (ClaimsIdentity) User.Identity;
+            var claimsIndentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIndentity.FindFirst(ClaimTypes.NameIdentifier);
 
             if (claim != null)
