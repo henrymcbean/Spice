@@ -57,6 +57,8 @@ namespace Spice.Areas.Customer.Controllers
                 }
             }
 
+
+            DetailsCart.OrderHeader.OrderTotal = Math.Round(DetailsCart.OrderHeader.OrderTotal, 2);
             DetailsCart.OrderHeader.OrderTotalOriginal = DetailsCart.OrderHeader.OrderTotal;
 
             if (HttpContext.Session.GetString(SD.ssCouponCode) != null)
@@ -84,6 +86,56 @@ namespace Spice.Areas.Customer.Controllers
         {
             HttpContext.Session.SetString(SD.ssCouponCode, string.Empty);
 
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Plus(int cartId)
+        {
+            var cartItemFromDb = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
+
+            if (cartItemFromDb != null)
+            { 
+                cartItemFromDb.Count += 1;
+                await _db.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        public async Task<IActionResult> Minus(int cartId)
+        {
+            var cartItemFromDb = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
+
+            if (cartItemFromDb.Count == 1)
+            {
+                _db.ShoppingCart.Remove(cartItemFromDb);
+                await _db.SaveChangesAsync();
+
+                var cnt = _db.ShoppingCart.Where(c => c.ApplicationUserId == cartItemFromDb.ApplicationUserId).ToList().Count;
+                HttpContext.Session.SetInt32(SD.ssShoppingCartCount, cnt);
+
+                return RedirectToAction(nameof(Index));
+            }
+            else
+            { 
+                cartItemFromDb.Count -= 1;
+                await _db.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        public async Task<IActionResult> Remove(int cartId)
+        {
+            var cartItemFromDb = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
+
+            if (cartItemFromDb != null)
+            {
+                _db.ShoppingCart.Remove(cartItemFromDb);
+                await _db.SaveChangesAsync();
+
+                var cnt = _db.ShoppingCart.Where(c => c.ApplicationUserId == cartItemFromDb.ApplicationUserId).ToList().Count;
+                HttpContext.Session.SetInt32(SD.ssShoppingCartCount, cnt);
+
+            }
             return RedirectToAction(nameof(Index));
         }
     }
