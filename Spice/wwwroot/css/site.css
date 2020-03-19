@@ -125,3 +125,7 @@ tr:nth-child(odd) {
     background-color: #5E5A68;
     color: #fff;
 }
+
+.total-bgclor {
+    background-color: #E9E5ED;
+}
