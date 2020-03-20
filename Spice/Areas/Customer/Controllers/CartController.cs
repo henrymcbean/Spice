@@ -117,6 +117,78 @@ namespace Spice.Areas.Customer.Controllers
             return View(DetailsCart);
         }
 
+        [HttpPost]
+        [ActionName("Summary")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SummaryConfirmed()
+        {
+            var claimsIdentity = (ClaimsIdentity)User.Identity;
+            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+
+            DetailsCart.ListCart = await _db.ShoppingCart.Where(c => c.ApplicationUserId == claim.Value).ToListAsync();
+
+            DetailsCart.OrderHeader.PaymentStatus = SD.PaymentStatusPending;
+            DetailsCart.OrderHeader.OrderDate = DateTime.Now;
+            DetailsCart.OrderHeader.UserId = claim.Value;
+            DetailsCart.OrderHeader.Status = SD.PaymentStatusPending;
+            DetailsCart.OrderHeader.PickupTime = Convert.ToDateTime(DetailsCart.OrderHeader.PickupDate.ToShortDateString() + " " + DetailsCart.OrderHeader.PickupTime.ToShortTimeString());
+
+            List<OrderDetails> orderDetailsList = new List<OrderDetails>();
+            _db.OrderHeader.Add(DetailsCart.OrderHeader);
+            await _db.SaveChangesAsync();
+
+            DetailsCart.OrderHeader.OrderTotalOriginal = 0;
+
+            foreach (var item in DetailsCart.ListCart)
+            {
+                item.MenuItem = await _db.MenuItem.FirstOrDefaultAsync(m => m.Id == item.MenuItemId);
+                OrderDetails orderDetails = new OrderDetails()
+                {
+                    MenuItemId = item.MenuItem.Id,
+                    OrderId = DetailsCart.OrderHeader.Id,
+                    Description = item.MenuItem.Description,
+                    Name = item.MenuItem.Name,
+                    Price = item.MenuItem.Price,
+                    Count = item.Count
+                };
+                DetailsCart.OrderHeader.OrderTotalOriginal += orderDetails.Count * orderDetails.Price;
+                _db.OrderDetails.Add(orderDetails);
+            }
+
+            if (HttpContext.Session.GetString(SD.ssCouponCode) != null)
+            {
+                DetailsCart.OrderHeader.CouponCode = HttpContext.Session.GetString(SD.ssCouponCode);
+                var couponFromDb = await _db.Coupon.FirstOrDefaultAsync(c => c.Name.ToLower().Trim() == DetailsCart.OrderHeader.CouponCode.ToLower().Trim());
+                DetailsCart.OrderHeader.OrderTotal = SD.DiscountedPrice(couponFromDb, DetailsCart.OrderHeader.OrderTotalOriginal);
+            }
+            else
+            {
+                DetailsCart.OrderHeader.OrderTotal = DetailsCart.OrderHeader.OrderTotalOriginal;
+            }
+
+            DetailsCart.OrderHeader.CouponDiscount = DetailsCart.OrderHeader.OrderTotalOriginal - DetailsCart.OrderHeader.OrderTotal;
+
+            _db.OrderHeader.Add(DetailsCart.OrderHeader);
+
+            // Remove Cart Items from database
+            _db.ShoppingCart.RemoveRange(DetailsCart.ListCart);
+
+            try
+            {
+                await _db.SaveChangesAsync();
+
+                // Remove session ssShoppingCartCount
+                HttpContext.Session.SetInt32(SD.ssShoppingCartCount, 0);
+            }
+            catch(Exception ex)
+            {
+                NotFound(ex.Message);
+                View(DetailsCart);
+            }
+
+            return RedirectToAction("Confirm", "Order", new { DetailsCart.OrderHeader.Id });
+        }
+
         public IActionResult AddCoupon()
         {
             if (DetailsCart.OrderHeader.CouponCode == null)
