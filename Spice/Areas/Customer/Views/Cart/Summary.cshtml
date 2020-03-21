@@ -158,17 +158,18 @@
                 minDt = 1;
             }
 
-            $("#datepicker").datepicker({ minDate: minDt, maxDate: "+1w" });
+            $("#datepicker").datepicker({
+                minDate: minDt,
+                maxDate: "+1w",
+                dateFormat: 'dd-mm-yy'
+            });
             $("#timepicker").timepicker({ 'minTime': '11:00 AM', 'maxTime': '9:00 PM', step: '30' });
         });
 
         function setPickUpTime() {
-            var dateSelected = document.getElementById('datepicker').value;
-            var dt = new Date(dateSelected);
+            var dt = $("#datepicker").datepicker( 'getDate' );
             var today = new Date();
             
-            dt.setHours(0, 0, 0, 0);
-
             if (dt > today) {
                 selectedTime = '11:00 am'
             }

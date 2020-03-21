@@ -36,6 +36,7 @@ namespace Spice.Models
 
         [Required]
         [DisplayName("Pickup Date")]
+        [DisplayFormat(ApplyFormatInEditMode = true, DataFormatString = "{0:dd/MM/yyyy}")]
         public DateTime PickupDate { get; set; }
 
         [DisplayName("Coupon Code")]

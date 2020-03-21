@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Spice.Models;
 using Spice.Utility;
 using Microsoft.AspNetCore.Http;
+using Stripe;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Spice.Areas.Customer.Controllers
 {
@@ -45,7 +47,7 @@ namespace Spice.Areas.Customer.Controllers
                 DetailsCart.ListCart = cart.ToList();
             }
 
-            foreach(var item in DetailsCart.ListCart)
+            foreach (var item in DetailsCart.ListCart)
             {
                 item.MenuItem = await _db.MenuItem.FirstOrDefaultAsync(m => m.Id == item.MenuItemId);
                 DetailsCart.OrderHeader.OrderTotal += item.Count * item.MenuItem.Price;
@@ -120,7 +122,7 @@ namespace Spice.Areas.Customer.Controllers
         [HttpPost]
         [ActionName("Summary")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SummaryConfirmed()
+        public async Task<IActionResult> SummaryConfirmed(string stripeToken)
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
@@ -133,59 +135,92 @@ namespace Spice.Areas.Customer.Controllers
             DetailsCart.OrderHeader.Status = SD.PaymentStatusPending;
             DetailsCart.OrderHeader.PickupTime = Convert.ToDateTime(DetailsCart.OrderHeader.PickupDate.ToShortDateString() + " " + DetailsCart.OrderHeader.PickupTime.ToShortTimeString());
 
-            List<OrderDetails> orderDetailsList = new List<OrderDetails>();
-            _db.OrderHeader.Add(DetailsCart.OrderHeader);
-            await _db.SaveChangesAsync();
-
-            DetailsCart.OrderHeader.OrderTotalOriginal = 0;
-
-            foreach (var item in DetailsCart.ListCart)
+            using (IDbContextTransaction transaction = _db.Database.BeginTransaction())
             {
-                item.MenuItem = await _db.MenuItem.FirstOrDefaultAsync(m => m.Id == item.MenuItemId);
-                OrderDetails orderDetails = new OrderDetails()
-                {
-                    MenuItemId = item.MenuItem.Id,
-                    OrderId = DetailsCart.OrderHeader.Id,
-                    Description = item.MenuItem.Description,
-                    Name = item.MenuItem.Name,
-                    Price = item.MenuItem.Price,
-                    Count = item.Count
-                };
-                DetailsCart.OrderHeader.OrderTotalOriginal += orderDetails.Count * orderDetails.Price;
-                _db.OrderDetails.Add(orderDetails);
-            }
-
-            if (HttpContext.Session.GetString(SD.ssCouponCode) != null)
-            {
-                DetailsCart.OrderHeader.CouponCode = HttpContext.Session.GetString(SD.ssCouponCode);
-                var couponFromDb = await _db.Coupon.FirstOrDefaultAsync(c => c.Name.ToLower().Trim() == DetailsCart.OrderHeader.CouponCode.ToLower().Trim());
-                DetailsCart.OrderHeader.OrderTotal = SD.DiscountedPrice(couponFromDb, DetailsCart.OrderHeader.OrderTotalOriginal);
-            }
-            else
-            {
-                DetailsCart.OrderHeader.OrderTotal = DetailsCart.OrderHeader.OrderTotalOriginal;
-            }
-
-            DetailsCart.OrderHeader.CouponDiscount = DetailsCart.OrderHeader.OrderTotalOriginal - DetailsCart.OrderHeader.OrderTotal;
-
-            _db.OrderHeader.Add(DetailsCart.OrderHeader);
-
-            // Remove Cart Items from database
-            _db.ShoppingCart.RemoveRange(DetailsCart.ListCart);
-
-            try
-            {
+                List<OrderDetails> orderDetailsList = new List<OrderDetails>();
+                _db.OrderHeader.Add(DetailsCart.OrderHeader);
                 await _db.SaveChangesAsync();
 
-                // Remove session ssShoppingCartCount
-                HttpContext.Session.SetInt32(SD.ssShoppingCartCount, 0);
-            }
-            catch(Exception ex)
-            {
-                NotFound(ex.Message);
-                View(DetailsCart);
-            }
+                DetailsCart.OrderHeader.OrderTotalOriginal = 0;
 
+                foreach (var item in DetailsCart.ListCart)
+                {
+                    item.MenuItem = await _db.MenuItem.FirstOrDefaultAsync(m => m.Id == item.MenuItemId);
+                    OrderDetails orderDetails = new OrderDetails()
+                    {
+                        MenuItemId = item.MenuItem.Id,
+                        OrderId = DetailsCart.OrderHeader.Id,
+                        Description = item.MenuItem.Description,
+                        Name = item.MenuItem.Name,
+                        Price = item.MenuItem.Price,
+                        Count = item.Count
+                    };
+                    DetailsCart.OrderHeader.OrderTotalOriginal += orderDetails.Count * orderDetails.Price;
+                    _db.OrderDetails.Add(orderDetails);
+                }
+
+                if (HttpContext.Session.GetString(SD.ssCouponCode) != null)
+                {
+                    DetailsCart.OrderHeader.CouponCode = HttpContext.Session.GetString(SD.ssCouponCode);
+                    var couponFromDb = await _db.Coupon.FirstOrDefaultAsync(c => c.Name.ToLower().Trim() == DetailsCart.OrderHeader.CouponCode.ToLower().Trim());
+                    DetailsCart.OrderHeader.OrderTotal = SD.DiscountedPrice(couponFromDb, DetailsCart.OrderHeader.OrderTotalOriginal);
+                }
+                else
+                {
+                    DetailsCart.OrderHeader.OrderTotal = DetailsCart.OrderHeader.OrderTotalOriginal;
+                }
+
+                DetailsCart.OrderHeader.CouponDiscount = DetailsCart.OrderHeader.OrderTotalOriginal - DetailsCart.OrderHeader.OrderTotal;
+
+                // Remove Cart Items from database
+                _db.ShoppingCart.RemoveRange(DetailsCart.ListCart);
+
+                try
+                {
+                    var options = new ChargeCreateOptions
+                    {
+                        Amount = Convert.ToInt32(DetailsCart.OrderHeader.OrderTotal * 100),
+                        Currency = "usd",
+                        Description = "Order ID : " + DetailsCart.OrderHeader.Id.ToString(),
+                        Source = stripeToken
+                    };
+
+                    var service = new ChargeService();
+                    Charge charge = service.Create(options);
+
+                    if (charge.BalanceTransactionId == null)
+                    {
+                        DetailsCart.OrderHeader.PaymentStatus = SD.PaymentStatusRejected;
+                    }
+                    else
+                    {
+                        DetailsCart.OrderHeader.TransactionId = charge.BalanceTransactionId;
+                    }
+
+                    if (charge.Status.ToLower() == "succeeded")
+                    {
+                        DetailsCart.OrderHeader.PaymentStatus = SD.PaymentStatusApproved;
+                        DetailsCart.OrderHeader.Status = SD.StatusSubmitted;
+                    }
+                    else
+                    {
+                        DetailsCart.OrderHeader.PaymentStatus = SD.PaymentStatusRejected;
+                    }
+
+                    await _db.SaveChangesAsync();
+                    transaction.Commit();
+
+                    // Remove session ssShoppingCartCount & ssCouponCode
+                    HttpContext.Session.SetInt32(SD.ssShoppingCartCount, 0);
+                    HttpContext.Session.SetString(SD.ssCouponCode, string.Empty);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                    NotFound(ex.Message);
+                    View(DetailsCart);
+                }
+            }
             return RedirectToAction("Index", "Home");
             //return RedirectToAction("Confirm", "Order", new { DetailsCart.OrderHeader.Id });
         }
@@ -213,7 +248,7 @@ namespace Spice.Areas.Customer.Controllers
             var cartItemFromDb = await _db.ShoppingCart.Where(c => c.Id == cartId).FirstOrDefaultAsync();
 
             if (cartItemFromDb != null)
-            { 
+            {
                 cartItemFromDb.Count += 1;
                 await _db.SaveChangesAsync();
             }
@@ -235,7 +270,7 @@ namespace Spice.Areas.Customer.Controllers
                 return RedirectToAction(nameof(Index));
             }
             else
-            { 
+            {
                 cartItemFromDb.Count -= 1;
                 await _db.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
