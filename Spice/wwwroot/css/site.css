@@ -129,3 +129,11 @@ tr:nth-child(odd) {
 .total-bgcolor {
     background-color: #E9E5ED;
 }
+
+.modal-md {
+    max-width: 60%;
+}
+
+.modal-dialog {
+    max-width:80%;
+}
