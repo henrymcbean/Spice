@@ -221,8 +221,8 @@ namespace Spice.Areas.Customer.Controllers
                     View(DetailsCart);
                 }
             }
-            return RedirectToAction("Index", "Home");
-            //return RedirectToAction("Confirm", "Order", new { DetailsCart.OrderHeader.Id });
+            
+            return RedirectToAction("Confirm", "Order", new { DetailsCart.OrderHeader.Id });
         }
 
         public IActionResult AddCoupon()
