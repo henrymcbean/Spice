@@ -38,7 +38,7 @@
                     <label>Order Total</label>
                 </div>
                 <div class="col-9">
-                    <input disabled asp-for=@Model.OrderHeader.OrderTotal class="form-control" />
+                    <input disabled asp-format="{0:0.00}" asp-for=@Model.OrderHeader.OrderTotal class="form-control" />
                 </div>
             </div>
             <div class="form-group row">
@@ -57,6 +57,43 @@
                     <input disabled asp-for=@Model.OrderHeader.Comments class="form-control" />
                 </div>
             </div>
+        </div>
+
+        <div class="col-lg-4 col-12">
+            <h4 class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted">Order ID:</span>
+                <span class="badge-secondary badge-pill">@Model.OrderHeader.Id</span>
+            </h4>
+            <ul class="list-group mb-3">
+                @{ var total = 0.0; }
+                @foreach (var detail in Model.OrderDetails)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <div>
+                            <h6 class="my-0">@detail.Name</h6>
+                            <small class="text-muted">Quantity: @detail.Count</small>
+                        </div>
+                        <span class="text-muted">@((detail.Count * detail.Price).ToString("0.00"))</span>
+                        @{ total += @detail.Count * @detail.Price; }
+                    </li>
+                }
+
+                @if (Model.OrderHeader.Comments != null)
+                {
+                    <li class="list-group-item d-flex justify-content-between">
+                        <div class="text-success">
+                            <h6 class="my-0">Promo Code</h6>
+                            <small class="text-muted">@Model.OrderHeader.CouponCode</small>
+                        </div>
+                        <span class="text-success">-@((total - Model.OrderHeader.OrderTotal).ToString("0.00"))</span>
+                    </li>
+                }
+                <li class="list-group-item d-flex justify-content-between total-bgcolor">
+                    <span class="text-info">Total (USD)</span>
+                    <span class="text-info"><strong>$@((Model.OrderHeader.OrderTotal).ToString("0.00"))</strong></span>
+                </li>
+            </ul>
+            <button type="submit" disabled class="btn btn-info form-control">@Model.OrderHeader.Status</button>
         </div>
     </div>
 </form>
