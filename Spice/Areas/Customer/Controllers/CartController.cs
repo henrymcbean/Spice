@@ -12,9 +12,11 @@ using Spice.Utility;
 using Microsoft.AspNetCore.Http;
 using Stripe;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Spice.Areas.Customer.Controllers
 {
+    [Authorize]
     [Area("Customer")]
     public class CartController : Controller
     {
