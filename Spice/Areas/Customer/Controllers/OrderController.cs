@@ -36,6 +36,10 @@ namespace Spice.Areas.Customer.Controllers
 
             return View(orderDetailsVM);
         }
+        public IActionResult Index()
+        {
+            return View();
+        }
 
         [Authorize]
         public async Task<IActionResult> OrderHistory()
@@ -59,10 +63,6 @@ namespace Spice.Areas.Customer.Controllers
             }
 
             return View(orderList);
-        }
-        public IActionResult Index()
-        {
-            return View();
         }
     }
 }
