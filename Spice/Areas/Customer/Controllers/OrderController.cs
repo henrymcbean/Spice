@@ -16,6 +16,7 @@ namespace Spice.Areas.Customer.Controllers
     public class OrderController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private int PageSize = 2;
 
         public OrderController(ApplicationDbContext db)
         {
@@ -28,7 +29,7 @@ namespace Spice.Areas.Customer.Controllers
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel()
+            OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel
             {
                 OrderHeader = await _db.OrderHeader.Include(o => o.ApplicationUser).Where(o => o.Id == id && o.UserId == claim.Value).FirstOrDefaultAsync(),
                 OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == id).ToListAsync()
@@ -42,27 +43,45 @@ namespace Spice.Areas.Customer.Controllers
         }
 
         [Authorize]
-        public async Task<IActionResult> OrderHistory()
+        public async Task<IActionResult> OrderHistory(int productPage = 1)
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
-            List<OrderDetailsViewModel> orderList = new List<OrderDetailsViewModel>();
+            OrderListViewModel orderListVM = new OrderListViewModel
+            {
+                Orders =  new List<OrderDetailsViewModel>(),
+
+            };
+
             List<OrderHeader> orderHeaderList = await _db.OrderHeader.Include(o => o.ApplicationUser).Where(u => u.ApplicationUser.Id == claim.Value).ToListAsync();
 
             foreach(var item in orderHeaderList)
             {
-                OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel()
+                OrderDetailsViewModel orderDetailsVM = new OrderDetailsViewModel
                 {
                     OrderHeader = item,
                     OrderDetails = await _db.OrderDetails.Where(o => o.OrderId == item.Id).ToListAsync()
                 };
 
-                orderList.Add(orderDetailsVM);
+                orderListVM.Orders.Add(orderDetailsVM);
 
             }
 
-            return View(orderList);
+            var count = orderListVM.Orders.Count;
+            orderListVM.Orders = orderListVM.Orders.OrderByDescending(p => p.OrderHeader.Id)
+                                .Skip((productPage - 1) * PageSize)
+                                .Take(PageSize).ToList();
+
+            orderListVM.PagingInfo = new PagingInfo
+            {
+                CurrentPage = productPage,
+                ItemsPerPage = PageSize,
+                TotalItems = count,
+                urlParam = "/Customer/Order/OrderHistory?productPage=:"
+            };
+
+            return View(orderListVM);
         }
 
         public async Task<IActionResult> GetOrderDetails(int Id)
