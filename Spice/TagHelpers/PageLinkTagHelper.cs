@@ -37,7 +37,7 @@ namespace Spice.TagHelpers
             IUrlHelper urlHelper = _urlHelperFactory.GetUrlHelper(ViewContext);
             TagBuilder ressult = new TagBuilder("DIV");
 
-            for (int i = 0; i <= PageModel.totalPage; i++)
+            for (int i = 1; i <= PageModel.totalPage; i++)
             {
                 TagBuilder tag = new TagBuilder("a");
                 string url = PageModel.urlParam.Replace(":", i.ToString());

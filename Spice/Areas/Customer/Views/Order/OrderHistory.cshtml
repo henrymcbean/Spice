@@ -1,4 +1,4 @@
-﻿@model IEnumerable<Spice.Models.ViewModels.OrderDetailsViewModel>
+﻿@model Spice.Models.ViewModels.OrderListViewModel
 @using Spice.Models;
 @{
     ViewData["Title"] = "OrderHistory";
@@ -18,32 +18,32 @@
     </div>
     <br />
     <div>
-        @if (Model.Count() > 0)
+        @if (Model.Orders.Count() > 0)
         {
         <div class="table-responsive">
             <table class="table bordere">
                 <tr class="table-secondary">
                     <th>
-                        @Html.DisplayNameFor(m => m.OrderHeader.Id)
+                        @Html.DisplayNameFor(m => m.Orders[0].OrderHeader.Id)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(m => m.OrderHeader.PickUpName)
+                        @Html.DisplayNameFor(m => m.Orders[0].OrderHeader.PickUpName)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(m => m.OrderHeader.ApplicationUser.Email)
+                        @Html.DisplayNameFor(m => m.Orders[0].OrderHeader.ApplicationUser.Email)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(m => m.OrderHeader.PickupTime)
+                        @Html.DisplayNameFor(m => m.Orders[0].OrderHeader.PickupTime)
                     </th>
                     <th>
-                        @Html.DisplayNameFor(m => m.OrderHeader.OrderTotal)
+                        @Html.DisplayNameFor(m => m.Orders[0].OrderHeader.OrderTotal)
                     </th>
                     <th>
                         Total Items
                     </th>
                     <th></th>
                 </tr>
-                @foreach (var item in @Model)
+                @foreach (var item in Model.Orders)
                 {
                     <tr>
                         <td>@Html.DisplayFor(m => item.OrderHeader.Id)</td>
@@ -60,6 +60,11 @@
                     </tr>
                 }
             </table>
+            <div page-model="@Model.PagingInfo" page-classes-enabled="true" page-class="btn border" 
+                 page-class-normal="btn btn-light" page-class-selected="btn btn-info active" 
+                 class="btn-group float-right">
+            </div>
+            <br />
         </div>
         }
         else
