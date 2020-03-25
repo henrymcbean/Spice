@@ -49,13 +49,23 @@
                             </li>
                         }
 
-                        @if(User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.CustomerUser))
+                        @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.FrontDeskUser) || User.IsInRole(SD.KitchenUser))
                         {
-                            <li class="nav-item">
-                                <a asp-area="Customer" asp-controller="Order" asp-action="OrderHistory" class="nav-link">
-                                    Order Histrory
+                            <li class="nav-item dropdown text-white-50">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropDownOrderLink" role="button" data-toggle="dropdown" aria-hashpopup="true," aria-expanded="false">
+                                    Order
                                 </a>
-                            </li> 
+                                <div class="dropdown-menu" aria-labelledby="navbarDropDownMenuLink">
+                                    @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.KitchenUser))
+                                    {
+                                        <a class="dropdown-item" asp-area="Customer" asp-controller="Order" asp-action="ManageOrder">Manage Order</a>
+                                    }
+                                    @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.FrontDeskUser))
+                                    {
+                                        <a class="dropdown-item" asp-area="Customer" asp-controller="Order" asp-action="OrderPickup">Order Pickup</a>
+                                    }
+                                </div>
+                            </li>
                         }
 
                         @if (HttpContextAccessor.HttpContext.Session.GetInt32("ssCartCount") != null)
