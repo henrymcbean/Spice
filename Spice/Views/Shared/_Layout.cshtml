@@ -49,6 +49,15 @@
                             </li>
                         }
 
+                        @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.CustomerUser))
+                        {
+                            <li class="nav-item">
+                                <a asp-area="Customer" asp-controller="Order" asp-action="OrderHistory" class="nav-link">
+                                    Order Histrory
+                                </a>
+                            </li>
+                        }
+
                         @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.FrontDeskUser) || User.IsInRole(SD.KitchenUser))
                         {
                             <li class="nav-item dropdown text-white-50">
