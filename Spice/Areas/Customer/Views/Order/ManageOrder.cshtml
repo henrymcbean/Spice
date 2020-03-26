@@ -11,7 +11,7 @@
     @if (Model.Count > 0)
     {
         <div class="container row bg-white p-2 border mb-3 rounded">
-            @foreach(var item in Model)
+            @foreach (var item in Model)
             {
                 <div class="col-12 pb-3 pt-3">
                     <div class="backgroundWhiteBorder10Padding">
@@ -24,6 +24,20 @@
                                         <li>@details.Name x @details.Count</li>
                                     }
                                 </ul>
+                            </div>
+                            <div class="col-4 pb-2">
+                                <div class="input-group-append pb-2">
+                                    <span class="input-group-text">Time</span>
+                                    <input type="text" value="@item.OrderHeader.PickupTime" readonly class="border rounded form-control" />
+                                </div>
+                                @{
+                                    var comments = item.OrderHeader.Comments;
+                                    @if (comments == null || comments.Trim().Length == 0)
+                                    {
+                                        item.OrderHeader.Comments = "No Instructions";
+                                    }
+                                }
+                                <textarea asp-for="@item.OrderHeader.Comments" class="rounded form-control" style="width:100%;height:75px;"></textarea>
                             </div>
                         </div>
                     </div>
