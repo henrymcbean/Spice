@@ -161,8 +161,8 @@ namespace Spice.Areas.Customer.Controllers
         [Authorize]
         public async Task<IActionResult> OrderPickup(int productPage = 1)
         {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
+            //var claimsIdentity = (ClaimsIdentity)User.Identity;
+            //var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
             OrderListViewModel orderListVM = new OrderListViewModel
             {
