@@ -46,11 +46,11 @@
                                 @if (item.OrderHeader.Status.Equals(SD.StatusSubmitted))
                                 {
                                     <div class="col-12">
-                                        <button type="submit" asp-action="OrderPrepare" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-info form-Control mb-3">
-                                            <i class="fas fa-check"></i>&nbsp; Start Cooking
+                                        <button type="submit" asp-action="OrderPrepare" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-info form-control mb-3">
+                                            <i class="fas fa-check"></i> &nbsp; Start Cooking
                                         </button>
-                                        <button type="submit" asp-action="OrderCancel" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-danger form-Control mb-3">
-                                            <i class="fas fa-times"></i>&nbsp; Cancel Order
+                                        <button type="submit" asp-action="OrderCancel" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-danger form-control mb-3">
+                                            <i class="fas fa-times"></i> &nbsp; Cancel Order
                                         </button>
                                     </div>
                                 }
@@ -60,10 +60,10 @@
                                     {
                                         <div class="col-12">
                                             <button type="submit" asp-action="OrderReady" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-success form-Control mb-3">
-                                                <i class="fas fa-flag-checkered"></i>&nbsp; Order Ready
+                                                <i class="fas fa-flag-checkered"></i> &nbsp; Order Ready
                                             </button>
                                             <button type="submit" asp-action="OrderCancel" asp-route-OrderId="@item.OrderHeader.Id" class="btn btn-danger form-Control mb-3">
-                                                <i class="fas fa-times"></i>&nbsp; Cancel Order
+                                                <i class="fas fa-times"></i> &nbsp; Cancel Order
                                             </button>
                                         </div>
                                     }
