@@ -1,4 +1,5 @@
 ﻿@model Spice.Models.ViewModels.OrderDetailsViewModel;
+@using Spice.Utility;
 @*
     For more information on enabling MVC for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 *@
@@ -93,7 +94,14 @@
                     <span class="text-info"><strong>$@((Model.OrderHeader.OrderTotal).ToString("0.00"))</strong></span>
                 </li>
             </ul>
-            <button type="submit" disabled class="btn btn-info form-control">@Model.OrderHeader.Status</button>
+            @if (Model.OrderHeader.Status.Equals(SD.StatusReady) && (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.FrontDeskUser)))
+            {
+                <button type="submit" class="btn btn-success form-control"><i class="far fa-thumbs-up"></i> Confirm Pickup</button>
+            }
+            else
+            {
+                <button type="submit" disabled class="btn btn-info form-control">@Model.OrderHeader.Status</button>
+            }
         </div>
     </div>
 </form>
