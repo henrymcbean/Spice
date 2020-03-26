@@ -137,3 +137,7 @@ tr:nth-child(odd) {
 .modal-dialog {
     max-width:80%;
 }
+
+.input-group-text {
+    background-color: #DCD9E3;
+}
