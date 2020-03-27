@@ -13,6 +13,8 @@ using Microsoft.AspNetCore.Http;
 using Stripe;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.AspNetCore.Authorization;
+using Spice.Service;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Spice.Areas.Customer.Controllers
 {
@@ -21,13 +23,15 @@ namespace Spice.Areas.Customer.Controllers
     public class CartController : Controller
     {
         private readonly ApplicationDbContext _db;
+        private readonly IEmailSender _emailSender;
 
         [BindProperty]
         public OrdersDetailsCartViewModel DetailsCart { get; set; }
 
-        public CartController(ApplicationDbContext db)
+        public CartController(ApplicationDbContext db, IEmailSender emailSender)
         {
             _db = db;
+            _emailSender = emailSender;
         }
 
         public async Task<IActionResult> Index()
@@ -124,8 +128,9 @@ namespace Spice.Areas.Customer.Controllers
         [HttpPost]
         [ActionName("Summary")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> SummaryConfirmed(string stripeToken)
+        public async Task<IActionResult> SummaryConfirmed(string stripeEmail, string stripeToken)
         {
+            bool emailSucceeded = false;
             var claimsIdentity = (ClaimsIdentity)User.Identity;
             var claim = claimsIdentity.FindFirst(ClaimTypes.NameIdentifier);
 
@@ -203,6 +208,7 @@ namespace Spice.Areas.Customer.Controllers
                     {
                         DetailsCart.OrderHeader.PaymentStatus = SD.PaymentStatusApproved;
                         DetailsCart.OrderHeader.Status = SD.StatusSubmitted;
+                        emailSucceeded = true; ;
                     }
                     else
                     {
@@ -211,6 +217,13 @@ namespace Spice.Areas.Customer.Controllers
 
                     await _db.SaveChangesAsync();
                     transaction.Commit();
+
+                    if (emailSucceeded)
+                    {
+                        await _emailSender.SendEmailAsync(_db.Users.Where(u => u.Id == claim.Value).FirstOrDefault().Email,
+                                "Spice - Order Created " + DetailsCart.OrderHeader.Id.ToString(),
+                                "Order has been submitted successfully.");
+                    }
 
                     // Remove session ssShoppingCartCount & ssCouponCode
                     HttpContext.Session.SetInt32(SD.ssShoppingCartCount, 0);
