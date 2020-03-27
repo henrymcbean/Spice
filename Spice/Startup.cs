@@ -51,6 +51,12 @@ namespace Spice
             services.AddControllersWithViews();
             services.AddRazorPages().AddRazorRuntimeCompilation();
 
+            services.AddAuthentication().AddFacebook(facebookOptions =>
+            {
+                facebookOptions.AppId = "682243679217460";
+                facebookOptions.AppSecret = "49e9ff762a1ae068476441a00bb7cf45";
+            });
+
             services.AddSession(options =>
             {
                 options.Cookie.HttpOnly = true;
