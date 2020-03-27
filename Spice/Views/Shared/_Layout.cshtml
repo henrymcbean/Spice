@@ -49,7 +49,7 @@
                             </li>
                         }
 
-                        @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.CustomerUser))
+                        @if (User.IsInRole(SD.ManagerUser) || User.IsInRole(SD.CustomerUser) || User.IsInRole(SD.FrontDeskUser) || User.IsInRole(SD.KitchenUser))
                         {
                             <li class="nav-item">
                                 <a asp-area="Customer" asp-controller="Order" asp-action="OrderHistory" class="nav-link">
