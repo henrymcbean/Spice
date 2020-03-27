@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Spice.Data
 {
-    interface IDbInitializer
+    public interface IDbInitializer
     {
         void Initializer();
     }

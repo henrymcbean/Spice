@@ -40,6 +40,8 @@ namespace Spice
                 .AddDefaultUI()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
+            services.AddScoped<IDbInitializer, DbInitializer>();
+
             services.Configure<StripeSettings>(Configuration.GetSection("Stripe"));
             services.AddSingleton<IEmailSender, EmailSender>();
             services.Configure<EmailOptions>(Configuration);
@@ -70,7 +72,7 @@ namespace Spice
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IDbInitializer dbInitializer)
         {
             if (env.IsDevelopment())
             {
@@ -92,6 +94,7 @@ namespace Spice
             StripeConfiguration.ApiKey = Configuration.GetSection("Stripe")["SecretKey"];
             // DotNet2.2 CoreStripeConfiguration.SetApiKey(Configuration.GetSection("Stripe")["SecretKey"]);
 
+            dbInitializer.Initializer();
             app.UseSession();
             app.UseAuthentication();
             app.UseAuthorization();
